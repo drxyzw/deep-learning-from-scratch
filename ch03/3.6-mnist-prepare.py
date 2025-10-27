@@ -1,27 +1,6 @@
-import sys, os
-from dataset.mnist import load_mnist
-import numpy as np
-from PIL import Image
 import pickle
 from datetime import datetime
-
-def sigmoid(x):
-    return 1. / (1. + np.exp(-x))
-
-def sofrmax(x):
-    x_max = np.max(x) # prevent overflow
-    exp_x = np.exp(x - x_max)
-    return exp_x / np.sum(exp_x)
-
-def img_show(img):
-    img = img.reshape(28, 28)
-    pil_img = Image.fromarray(np.uint8(img))
-    pil_img.show()
-
-def get_data(normalize):
-    # takes a few mins at initial call
-    (x_train, t_train), (x_test, t_test) = load_mnist(flatten=True, normalize=normalize, one_hot_label=False)
-    return x_test, t_test
+from utils import *
 
 # print(x_train.shape) # 60k, 786 (=28**2)
 # print(t_train.shape) # 60k, label data
@@ -53,7 +32,7 @@ def predict(network, x):
 # print(img.shape)
 # img_show(img)
 
-x, t = get_data(normalize=True)
+_, _, x, t = get_data(normalize=True)
 network = init_network()
 
 starttime = datetime.now()
