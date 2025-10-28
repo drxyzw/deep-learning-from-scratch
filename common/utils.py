@@ -6,7 +6,7 @@ import copy
 def sigmoid(x):
     return 1. / (1. + np.exp(-x))
 
-def sofrmax(x):
+def softmax(x):
     x_max = np.max(x) # prevent overflow
     exp_x = np.exp(x - x_max)
     return exp_x / np.sum(exp_x)
@@ -24,7 +24,7 @@ def get_data(normalize, one_hot_label = False):
 def sum_squared_error(x, y):
     return np.sum((x-y)**2)
 
-def cross_entropy(t, y, one_hot_label = True):
+def cross_entropy_error(t, y, one_hot_label = True):
     if y.ndim == 1:
         t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)

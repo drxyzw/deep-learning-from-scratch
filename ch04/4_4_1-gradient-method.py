@@ -1,4 +1,4 @@
-from utils import *
+from common.utils import *
 import numpy as np
 
 x_init = np.array([-3., 4.])

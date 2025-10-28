@@ -1,6 +1,6 @@
 import pickle
 from datetime import datetime
-from utils import *
+from common.utils import *
 
 # print(x_train.shape) # 60k, 786 (=28**2)
 # print(t_train.shape) # 60k, label data
@@ -20,7 +20,7 @@ def predict(network, x):
     a2 = np.dot(z1, W2) + b2
     z2 = sigmoid(a2)
     a3 = np.dot(z2, W3) + b3
-    z3 = sofrmax(a3)
+    z3 = softmax(a3)
     return z3
 
 # img = x_train[0]

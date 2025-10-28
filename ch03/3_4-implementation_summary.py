@@ -6,7 +6,7 @@ def sigmoid(x):
 def identity_function(x):
     return x
 
-def sofrmax(x):
+def softmax(x):
     x_max = max(x) # prevent overflow
     exp_x = np.exp(x - x_max)
     return exp_x / sum(exp_x)
@@ -38,5 +38,5 @@ x = np.array([1.0, 0.5])
 y = forward(network, x)
 print(y)
 
-y = sofrmax(np.array([0.3, 2.9, 4.]))
+y = softmax(np.array([0.3, 2.9, 4.]))
 print(y)

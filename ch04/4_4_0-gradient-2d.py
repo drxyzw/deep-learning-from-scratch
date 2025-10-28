@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from utils import *
+from common.utils import *
 
 x = np.linspace(-2, 2, 17)
 y = np.linspace(-2, 2, 17)
