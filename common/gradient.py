@@ -8,9 +8,9 @@ def numerical_gradient(f, x):
     for idx, _ in np.ndenumerate(x):
         tmp_val = x[idx]
         x[idx] = tmp_val + h
-        fxph = f(x)
+        fxph = f(x).copy()
         x[idx] = tmp_val - h
-        fxmh = f(x)
+        fxmh = f(x).copy()
         grad[idx] = (fxph - fxmh) / (2.*h)
         x[idx] = tmp_val
     return grad

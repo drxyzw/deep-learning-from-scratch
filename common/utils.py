@@ -24,11 +24,11 @@ def get_data(normalize, one_hot_label = False):
 def sum_squared_error(x, y):
     return np.sum((x-y)**2)
 
-def cross_entropy_error(t, y, one_hot_label = True):
+def cross_entropy_error(y, t, one_hot_label = True):
     if y.ndim == 1:
         t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)
-    batch_size = y.ndim
+    batch_size = y.shape[0]
 
     if one_hot_label:
         return -np.sum(t * np.log(y + 1.e-7)) / batch_size # normalized by batch_size

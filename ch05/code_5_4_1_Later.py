@@ -56,12 +56,15 @@ class Sigmoid:
 class Affine:
     def __init__(self, W, b):
         self.W = W
+        # np.savetxt("W1.csv", self.W, delimiter=",")
         self.b = b
+        # np.savetxt("b1.csv", self.b, delimiter=",")
         self.x = None
         self.dW = None
         self.db = None
     def forward(self, x):
         self.x = x
+        # np.savetxt("x.csv", self.x, delimiter=",")
         out = np.dot(x, self.W) + self.b
         return out
     def backward(self, dout):

@@ -5,20 +5,21 @@ from common.gradient import *
 import time
 
 class TwoLayerNet:
-    def __init__(self, input_size, hidden_size, output_size, weight_init_std = 0.01):
+    def __init__(self, input_size, hidden_size, output_size, weight_init_std = 0.01, seed = 137):
+        np.random.seed(seed)
         hidden_size = output_size
         # initialize weight
         self.params = {}
         self.params["W1"] = weight_init_std * np.random.randn(input_size, hidden_size)
         self.params['b1'] = np.zeros(hidden_size)
-        self.params['W2'] = weight_init_std * np.random.randn(hidden_size, output_size)
-        self.params['b2'] = np.zeros(output_size)
+        # self.params['W2'] = weight_init_std * np.random.randn(hidden_size, output_size)
+        # self.params['b2'] = np.zeros(output_size)
 
         # generating layers
         self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
-        self.layers['Relu1'] = ReLU()
-        self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
+        # self.layers['Relu1'] = ReLU()
+        # self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
         self.lastLayer = SoftmaxWithLoss()
 
     def predict(self, x):
@@ -42,8 +43,8 @@ class TwoLayerNet:
         grads = {}
         grads['W1'] = numerical_gradient(loss_W, self.params['W1'])
         grads['b1'] = numerical_gradient(loss_W, self.params['b1'])
-        grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
-        grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
+        # grads['W2'] = numerical_gradient(loss_W, self.params['W2'])
+        # grads['b2'] = numerical_gradient(loss_W, self.params['b2'])
         return grads
     
     def gradient(self, x, t):
@@ -61,8 +62,8 @@ class TwoLayerNet:
         grads = {}
         grads['W1'] = self.layers['Affine1'].dW
         grads['b1'] = self.layers['Affine1'].db
-        grads['W2'] = self.layers['Affine2'].dW
-        grads['b2'] = self.layers['Affine2'].db
+        # grads['W2'] = self.layers['Affine2'].dW
+        # grads['b2'] = self.layers['Affine2'].db
         return grads
 
 if __name__ == "__main__":
