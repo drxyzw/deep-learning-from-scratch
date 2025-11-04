@@ -3,13 +3,20 @@ import numpy as np
 from PIL import Image
 import copy
 
+OUTPUT_DEBUG = False
+
 def sigmoid(x):
     return 1. / (1. + np.exp(-x))
 
 def softmax(x):
-    x_max = np.max(x) # prevent overflow
-    exp_x = np.exp(x - x_max)
-    return exp_x / np.sum(exp_x)
+    if x.ndim == 1:
+        x_max = np.max(x) # prevent overflow
+        exp_x = np.exp(x - x_max)
+        return exp_x / np.sum(exp_x)
+    else:
+        x_max = np.max(x, axis=1).reshape(-1, 1) # prevent overflow
+        exp_x = np.exp(x - x_max)
+        return exp_x / np.sum(exp_x, axis=1)[:,None]
 
 def img_show(img):
     img = img.reshape(28, 28)
@@ -25,6 +32,8 @@ def sum_squared_error(x, y):
     return np.sum((x-y)**2)
 
 def cross_entropy_error(y, t, one_hot_label = True):
+    # cross entropy
+    # E = - \sum_n \sum_i t_i * ln(y_i) / [# of n]
     if y.ndim == 1:
         t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)

@@ -1,5 +1,5 @@
 import numpy as np
-from common.utils import softmax, cross_entropy_error
+from common.utils import softmax, cross_entropy_error, OUTPUT_DEBUG
 
 class MulLayer:
     def __init__(self):
@@ -56,21 +56,34 @@ class Sigmoid:
 class Affine:
     def __init__(self, W, b):
         self.W = W
-        # np.savetxt("W1.csv", self.W, delimiter=",")
         self.b = b
-        # np.savetxt("b1.csv", self.b, delimiter=",")
+        if OUTPUT_DEBUG:
+            np.savetxt("W1.csv", self.W, delimiter=",")
+            np.savetxt("b1.csv", self.b, delimiter=",")
         self.x = None
         self.dW = None
         self.db = None
     def forward(self, x):
         self.x = x
-        # np.savetxt("x.csv", self.x, delimiter=",")
+        if OUTPUT_DEBUG:
+            np.savetxt("x.csv", self.x, delimiter=",")
         out = np.dot(x, self.W) + self.b
         return out
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
-        self.dW = np.dot(self.x.T, dout)
-        self.db = dout
+        # self.dW = np.dot(self.x.T, dout)
+        # self.db = dout
+        if dx.ndim == 1 or dx.shape[0] == 1:
+            self.dW = np.dot(self.x.T, dout)
+            self.db = dout
+        else:
+            dW = np.dot(self.x.T, dout)
+            db = dout
+        #     # because cross entropy is
+        #     # E = - \sum_n \sum_i t_i * ln(y_i) / [# of n]
+        #     # dE/dw = \sum_n [dE_n/dw] / [# of n]
+            self.dW = dW / dx.shape[0]
+            self.db = np.sum(db, axis=0) / dx.shape[0]
         return dx
 
 class SoftmaxWithLoss:
@@ -86,6 +99,14 @@ class SoftmaxWithLoss:
     def backward(self, dout = 1.):
         dx = dout * (self.y - self.t)
         return dx
+        # if dx.ndim == 1:
+        #     return dx
+        # else:
+        #     # because cross entropy is
+        #     # E = - \sum_n \sum_i t_i * ln(y_i) / [# of n]
+        #     # dE/dw = \sum_n [dE_n/dw] / [# of n]
+        #     dx_sum = np.sum(dx, axis=0) / dx.shape[0]
+        #     return dx_sum
 
 if __name__ == "__main__":
     apple = 100
