@@ -1,4 +1,5 @@
 import numpy as np
+import numbers
 
 class SGD:
     def __init__(self, lr = 0.01):
@@ -80,7 +81,25 @@ if __name__ == "__main__":
 
     (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
 
-    network = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
+    input_size=784
+    hidden_size=50
+    output_size=10
+    weight_init_std_type=0.
+    # weight_init_std_type=0.01
+    # weight_init_std_type="Xavier"
+    # weight_init_std_type="He"
+    if isinstance(weight_init_std_type, numbers.Number):
+        weight_init_std = weight_init_std_type
+    elif weight_init_std_type.upper() == "XAVIER":
+        weight_init_std = {}
+        weight_init_std["W1"] = 1. / np.sqrt(input_size)
+        weight_init_std["W2"] = 1. / np.sqrt(hidden_size)
+    elif weight_init_std_type.upper() == "HE":
+        weight_init_std = {}
+        weight_init_std["W1"] = np.sqrt(2. / input_size)
+        weight_init_std["W2"] = np.sqrt(2. / hidden_size)
+
+    network = TwoLayerNet(input_size=input_size, hidden_size=hidden_size, output_size=output_size, weight_init_std=weight_init_std)
 
     iters_num = 10000
     train_size = x_train.shape[0]
@@ -98,11 +117,11 @@ if __name__ == "__main__":
     # optimizer = Momentum(lr=learning_rate)
     # optimizer = AdaGrad(lr=learning_rate)
 
-    # optimizer = SGD(lr = 0.95)
+    optimizer = SGD(lr = 0.95)
     # optimizer = Momentum(lr = 0.1, momentum=0.9)
     # optimizer = AdaGrad(lr = 0.03)
     # optimizer = RMSProp(lr = 0.005, decay_rate=0.05)
-    optimizer = Adam(lr = 0.005, beta1=0.9, beta2=0.99)
+    # optimizer = Adam(lr = 0.005, beta1=0.9, beta2=0.99)
 
     for i in range(iters_num):
         batch_mask = np.random.choice(train_size, batch_size)
@@ -127,4 +146,4 @@ if __name__ == "__main__":
 
     # summarize output in a dataframe to export it to a file
     df_output = pd.DataFrame({"loss": train_loss_list, "train_acc": train_acc_list, "test_acc": test_acc_list})
-    df_output.to_excel(f"./ch06/learning_backward_{optimizer.__class__.__name__}.xlsx", index=True)
+    df_output.to_excel(f"./ch06/learning_backward_{optimizer.__class__.__name__}_weight_init_{weight_init_std_type}.xlsx", index=True)

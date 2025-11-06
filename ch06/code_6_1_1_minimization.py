@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from ch06.code_6_1_0_optimization import SGD, Momentum
+from ch06.code_6_1_0_optimization import SGD, Momentum, AdaGrad, RMSProp, Adam
 import pandas as pd
 import numpy as np
 from copy import copy
@@ -13,7 +13,10 @@ def grad(params):
     return dout
 params = {"x": -7., "y": 2.}
 # optimizer = SGD(lr = 0.95)
-optimizer = Momentum(lr = 0.01, momentum=0.9)
+# optimizer = Momentum(lr = 0.01, momentum=0.9)
+# optimizer = AdaGrad(lr = 0.5)
+# optimizer = RMSProp(lr = 0.5, decay_rate=0.2)
+optimizer = Adam(lr = 0.5, beta1=0.9, beta2=0.999)
 dicts = [copy(params)]
 for i in range(1000):
     dz = grad(params)

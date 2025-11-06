@@ -1,6 +1,16 @@
 import numpy as np
 from common.utils import softmax, cross_entropy_error, OUTPUT_DEBUG
 
+class Identity:
+    def __init__(self):
+        pass
+    
+    def forward(self, x):
+        return x
+    
+    def backward(self, dout):
+        return dout
+
 class MulLayer:
     def __init__(self):
         self.x = None
