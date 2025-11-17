@@ -193,6 +193,7 @@ class MultiLayerNet:
         # hidden_size = output_size
         # initialize weight
         self.params = {}
+        self.layers = OrderedDict()
         for i in range(n_layers):
             if i == 0:
                 intermediate_inlayer_size = input_size
@@ -206,13 +207,10 @@ class MultiLayerNet:
             self.params[f"W{i+1}"] = weight_init_std[f"W{i+1}"] * np.random.randn(intermediate_inlayer_size, intermediate_outlayer_size)
             self.params[f'b{i+1}'] = np.zeros(intermediate_outlayer_size)
 
-        # generating layers
-        self.layers = OrderedDict()
-        for i in range(n_layers):
             self.layers[f'Affine{i+1}'] = Affine(self.params[f'W{i+1}'], self.params[f'b{i+1}'])
             if self.use_batch_norm:
-                self.params[f'gamma{i+1}'] = np.ones(hidden_size)
-                self.params[f'beta{i+1}'] = np.ones(hidden_size)
+                self.params[f'gamma{i+1}'] = np.ones(intermediate_outlayer_size)
+                self.params[f'beta{i+1}'] = np.ones(intermediate_outlayer_size)
                 self.layers[f'BatchNorm{i+1}'] = BatchNormalization(
                     self.params[f'gamma{i+1}'],
                     self.params[f'beta{i+1}']

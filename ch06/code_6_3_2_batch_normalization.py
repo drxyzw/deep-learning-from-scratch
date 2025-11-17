@@ -17,7 +17,7 @@ if __name__ == "__main__":
     weight_init_std=0.1
     # network = FiveLayerNet(input_size=input_size, hidden_size=hidden_size, output_size=output_size, weight_init_std=weight_init_std,
     #                        activation="ReLU")
-    use_batch_norm = True
+    use_batch_norm = False
     network = MultiLayerNet(n_layers=5, input_size=input_size, hidden_size=hidden_size, output_size=output_size, weight_init_std=weight_init_std,
                            use_batch_norm=use_batch_norm, activation="ReLU")
 
@@ -67,4 +67,4 @@ if __name__ == "__main__":
     # summarize output in a dataframe to export it to a file
     df_output = pd.DataFrame({"loss": train_loss_list, "train_acc": train_acc_list, "test_acc": test_acc_list})
     batch_normalization = "none" if not hasattr(network, "use_batch_norm") else "on" if network.use_batch_norm else "off"
-    df_output.to_excel(f"./ch06/five_learning_backward_{optimizer.__class__.__name__}_batch_normalization_{batch_normalization}.xlsx", index=True)
+    df_output.to_excel(f"./ch06/multi_learning_backward_{optimizer.__class__.__name__}_batch_normalization_{batch_normalization}.xlsx", index=True)
