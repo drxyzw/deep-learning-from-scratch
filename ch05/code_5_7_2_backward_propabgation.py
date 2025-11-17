@@ -75,6 +75,7 @@ class TwoLayerNet:
 
 class FiveLayerNet:
     def __init__(self, input_size, hidden_size, output_size, weight_init_std = 0.01, seed = 137, activation="sigmoid"):
+        np.random.seed(seed)
         activation_capital = activation.upper()
         if np.isscalar(weight_init_std):
            w = weight_init_std
@@ -175,6 +176,106 @@ class FiveLayerNet:
         grads['b4'] = self.layers['Affine4'].db
         grads['W5'] = self.layers['Affine5'].dW
         grads['b5'] = self.layers['Affine5'].db
+        return grads
+
+class MultiLayerNet:
+    def __init__(self, n_layers, input_size, hidden_size, output_size, weight_init_std = 0.01, seed = 137, activation="sigmoid", use_batch_norm=False):
+        np.random.seed(seed)
+        self.n_layers = n_layers
+        self.use_batch_norm = use_batch_norm
+        activation_capital = activation.upper()
+        if np.isscalar(weight_init_std):
+           w = weight_init_std
+           weight_init_std = {}
+           for i in range(n_layers):
+               weight_init_std[f"W{i+1}"] = w
+
+        # hidden_size = output_size
+        # initialize weight
+        self.params = {}
+        for i in range(n_layers):
+            if i == 0:
+                intermediate_inlayer_size = input_size
+                intermediate_outlayer_size = hidden_size
+            elif i == n_layers-1:
+                intermediate_inlayer_size = hidden_size
+                intermediate_outlayer_size = output_size
+            else:
+                intermediate_inlayer_size = hidden_size
+                intermediate_outlayer_size = hidden_size
+            self.params[f"W{i+1}"] = weight_init_std[f"W{i+1}"] * np.random.randn(intermediate_inlayer_size, intermediate_outlayer_size)
+            self.params[f'b{i+1}'] = np.zeros(intermediate_outlayer_size)
+
+        # generating layers
+        self.layers = OrderedDict()
+        for i in range(n_layers):
+            self.layers[f'Affine{i+1}'] = Affine(self.params[f'W{i+1}'], self.params[f'b{i+1}'])
+            if self.use_batch_norm:
+                self.params[f'gamma{i+1}'] = np.ones(hidden_size)
+                self.params[f'beta{i+1}'] = np.ones(hidden_size)
+                self.layers[f'BatchNorm{i+1}'] = BatchNormalization(
+                    self.params[f'gamma{i+1}'],
+                    self.params[f'beta{i+1}']
+                )
+            self.layers[f'Sigmoid{i+1}'] = Sigmoid() if activation_capital=="SIGMOID" else ReLU()
+        self.lastLayer = SoftmaxWithLoss()
+
+        self.z = {}
+
+    def predict(self, x):
+        i = 0
+        c = 0
+        for layer in self.layers.values():
+            x = layer.forward(x)
+            if i % 2 == 1:
+                self.z[c] = copy(x)
+                c += 1
+            i += 1
+        return x
+
+    def loss(self, x, t): # x = input, t = target data
+        y = self.predict(x)
+        return self.lastLayer.forward(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y_score = np.argmax(y, axis=1)
+        t_score = np.argmax(t, axis=1)
+        ar = np.sum(y_score == t_score) / len(y_score)
+        return ar
+
+    def numerical_gradient_net(self, x, t):
+        loss_W = lambda W: self.loss(x, t)
+        grads = {}
+        for i in range(self.n_layers):
+            grads[f'W{i+1}'] = numerical_gradient(loss_W, self.params[f'W{i+1}'])
+            grads[f'b{i+1}'] = numerical_gradient(loss_W, self.params[f'b{i+1}'])
+
+            if self.use_batch_norm:
+                grads[f'gamma{i+1}'] = numerical_gradient(loss_W, self.params[f'gamma{i+1}'])
+                grads[f'beta{i+1}'] = numerical_gradient(loss_W, self.params[f'beta{i+1}'])
+
+        return grads
+    
+    def gradient(self, x, t):
+        # forward
+        self.loss(x, t)
+
+        # backward
+        dout = 1.
+        dout = self.lastLayer.backward(dout) 
+        rev_layers = list(self.layers.values())
+        rev_layers.reverse()
+        for layer in rev_layers:
+            dout = layer.backward(dout)
+        # populate results
+        grads = {}
+        for i in range(self.n_layers):
+            grads[f'W{i+1}'] = self.layers[f'Affine{i+1}'].dW
+            grads[f'b{i+1}'] = self.layers[f'Affine{i+1}'].db
+            if self.use_batch_norm:
+                grads[f'gamma{i+1}'] = self.layers[f'BatchNorm{i+1}'].dgamma
+                grads[f'beta{i+1}'] = self.layers[f'BatchNorm{i+1}'].dbeta
         return grads
 
 if __name__ == "__main__":
