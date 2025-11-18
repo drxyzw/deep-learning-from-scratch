@@ -190,6 +190,23 @@ class BatchNormalization:
         self.dbeta = dbeta
         return dx 
 
+class Dropout:
+    def __init__(self, dropout_rate):
+        self.dropout_rate = dropout_rate
+        self.mask = None
+        self.rand_gen = np.random.RandomState(42)
+    def forward(self, x, train_flag):
+        if train_flag:
+            # self.mask = np.ones(x.shape)
+            # self.mask = np.random.rand(*x.shape) > self.dropout_rate # *x.shape unpacks (n, m) to n, m
+            self.mask = self.rand_gen.rand(*x.shape) > self.dropout_rate
+            return x * self.mask
+        else:
+            return x * (1. - self.dropout_rate)
+    def backward(self, dout):
+        return dout
+        return dout * self.mask
+    
 if __name__ == "__main__":
     apple = 100
     apple_num = 2
