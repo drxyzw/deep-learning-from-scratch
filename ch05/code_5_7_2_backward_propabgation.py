@@ -179,10 +179,11 @@ class FiveLayerNet:
         return grads
 
 class MultiLayerNet:
-    def __init__(self, n_layers, input_size, hidden_size, output_size, weight_init_std = 0.01, seed = 137, activation="sigmoid", use_batch_norm=False):
+    def __init__(self, n_layers, input_size, hidden_size, output_size, weight_init_std = 0.01, seed = 137, activation="sigmoid", use_batch_norm=False, weight_decay=None):
         np.random.seed(seed)
         self.n_layers = n_layers
         self.use_batch_norm = use_batch_norm
+        self.weight_decay = weight_decay
         activation_capital = activation.upper()
         if np.isscalar(weight_init_std):
            w = weight_init_std
@@ -233,7 +234,14 @@ class MultiLayerNet:
 
     def loss(self, x, t): # x = input, t = target data
         y = self.predict(x)
-        return self.lastLayer.forward(y, t)
+        loss_wo_weight_decay = self.lastLayer.forward(y, t)
+
+        loss_weight_decay = 0.
+        if not self.weight_decay is None:
+            for i in range(self.n_layers):
+                loss_weight_decay += 0.5 * self.weight_decay * np.sum(self.params[f'W{i+1}'] **2)
+
+        return loss_wo_weight_decay + loss_weight_decay
 
     def accuracy(self, x, t):
         y = self.predict(x)
@@ -269,8 +277,13 @@ class MultiLayerNet:
         # populate results
         grads = {}
         for i in range(self.n_layers):
-            grads[f'W{i+1}'] = self.layers[f'Affine{i+1}'].dW
-            grads[f'b{i+1}'] = self.layers[f'Affine{i+1}'].db
+            if self.weight_decay is None:
+                grads[f'W{i+1}'] = self.layers[f'Affine{i+1}'].dW
+                grads[f'b{i+1}'] = self.layers[f'Affine{i+1}'].db
+            else:
+                grads[f'W{i+1}'] = self.layers[f'Affine{i+1}'].dW + self.weight_decay * self.params[f'W{i+1}']
+                grads[f'b{i+1}'] = self.layers[f'Affine{i+1}'].db
+                
             if self.use_batch_norm:
                 grads[f'gamma{i+1}'] = self.layers[f'BatchNorm{i+1}'].dgamma
                 grads[f'beta{i+1}'] = self.layers[f'BatchNorm{i+1}'].dbeta
