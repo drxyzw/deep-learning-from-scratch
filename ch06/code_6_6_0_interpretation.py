@@ -4,12 +4,49 @@ import numbers
 import os
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
-
+import scipy.linalg as la
 from dataset.mnist import load_mnist
 
 from ch06.code_6_2_1_initial_weight import *
 from ch05.code_5_7_2_backward_propabgation import MultiLayerNet
 
+def image_chart(graph_draw_num, key, image_vecs, ordering_values, directory, flag=""):
+    width = 1920
+    height = 1080
+    dpi = 100
+    col_num = 10
+    row_num = int(np.ceil(graph_draw_num / col_num))
+    font_size=8
+    font_color="white"
+    params = {"ytick.color" : font_color,
+              "xtick.color" : font_color,
+              "axes.labelcolor" : font_color,
+              "axes.edgecolor" : font_color,
+              "font.size": font_size,          # default text size
+              "axes.titlesize": font_size,     # title size
+              "axes.labelsize": font_size,     # axis label size
+              "xtick.labelsize": font_size,    # x-tick label size
+              "ytick.labelsize": font_size,    # y-tick label size
+              "legend.fontsize": font_size,    # legend
+             }
+    plt.rcParams.update(params)
+    fig, axes = plt.subplots(row_num, col_num, figsize=(width/dpi, height/dpi), dpi=dpi)
+    fig.set_facecolor('black')
+    axes = axes.flatten()
+    for i in range(graph_draw_num):
+        print(key + " " + str(i) + "No." + flag + " vectors")
+        ordering_value_text = f"{ordering_values[i]:.2f}" if ordering_values is not None else ""
+        axes[i].set_title(f"{ordering_value_text}(No.{i+1}-{flag})", color="w")
+        axes[i].matshow(image_vecs[i].reshape(28, 28), cmap="gray")
+        if i % col_num: axes[i].set_yticklabels([])
+        axes[i].set_xticklabels([])
+    # plt.subplots_adjust(hspace=0.1)
+    outputfig = os.path.join(directory, f"{key}{('_' + flag) if (flag != '') else ''}.png")
+    plt.suptitle(f"{key} {flag}", color="white")
+    plt.savefig(outputfig, facecolor=fig.get_facecolor())
+    # plt.show()
+    print("== End of plot ==")
+                
 (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
 # for accerelation
 # x_train = x_train[:500]
@@ -128,10 +165,15 @@ if __name__=="__main__":
                 fullpath = os.path.join(directory, filename)
                 df = pd.read_excel(fullpath)
                 df_values = df.values
+                if key.startswith('b'):
+                    # convert shape from (n,1) to (n,) for broadcasting
+                    df_values = df_values.ravel()
                 params[key] = df_values
+                    
 
     for key, value in sorted(params.items()):
         if key.startswith("W"): # only interested in weight, not in bias "b"
+            idx_layer = int(key[1:])
             svd = np.linalg.svd(value)
             U = svd.U
             S = svd.S
@@ -140,11 +182,15 @@ if __name__=="__main__":
             singular_input_vecs = []
             singular_output_vecs = []
             singular_values = []
+            original_vecs = []
+            bias_vecs = []
             for r in range(rnk):
                 singular_input_vec = U[:, r]
                 singular_input_vecs.append(singular_input_vec)
                 singular_output_vec = Vh[r]
                 singular_output_vecs.append(singular_output_vec)
+                original_vec = value[:, r]
+                original_vecs.append(original_vec)
             singular_values = S
             print(f"svd for {key} is done")
 
@@ -153,37 +199,30 @@ if __name__=="__main__":
             singular_values = singular_values[idx]
             singular_input_vecs = np.array(singular_input_vecs)[idx]
             singular_output_vecs = np.array(singular_output_vecs)[idx]
+            original_vecs = np.array(original_vecs)[idx]
 
             # Chart
-            graph_draw_num = rnk
-            col_num = 10
-            row_num = int(np.ceil(graph_draw_num / col_num))
-            font_size=8
-            font_color="white"
-            params = {"ytick.color" : font_color,
-                      "xtick.color" : font_color,
-                      "axes.labelcolor" : font_color,
-                      "axes.edgecolor" : font_color,
-                      "font.size": font_size,          # default text size
-                      "axes.titlesize": font_size,     # title size
-                      "axes.labelsize": font_size,     # axis label size
-                      "xtick.labelsize": font_size,    # x-tick label size
-                      "ytick.labelsize": font_size,    # y-tick label size
-                      "legend.fontsize": font_size,    # legend
-                     }
-            plt.rcParams.update(params)
-            fig, axes = plt.subplots(row_num, col_num)
-            fig.set_facecolor('black')
-            axes = axes.flatten()
             if key == "W1":
-                for r in range(rnk):
-                    print(key + " " + str(r) + "-th input vectors")
-                    axes[r].set_title(f"{singular_values[r]:.2f}(No.{r+1}-in)", color="w")
-                    axes[r].matshow(singular_input_vecs[r].reshape(28, 28), cmap="gray")
-                    if r % col_num: axes[r].set_yticklabels([])
-                    axes[r].set_xticklabels([])
-                # plt.subplots_adjust(hspace=0.1)
-                plt.show()
-                outputfig = os.path.join(directory, f"{key}_input.png")
-                plt.savefig(outputfig)
-            print("== End of plot ==")
+                image_chart(graph_draw_num = rnk, key = key, image_vecs = singular_input_vecs, ordering_values = singular_values, directory = directory, flag="input")
+            n_input = params['W1'].shape[0]
+            n_output = params[f'W{idx_layer}'].shape[1]
+            # ones = np.ones((n_input, n_input))
+            # white_cumulative = ones.copy()
+            white_cumulative = np.identity(n_input)
+            white_cumulative_plus_bias = np.identity(n_input)
+            for i in range(idx_layer):
+                white_cumulative = white_cumulative@params[f"W{i+1}"]
+                white_cumulative_plus_bias = white_cumulative_plus_bias@params[f"W{i+1}"] + params[f"b{i+1}"]
+            output_vecs = []
+            output_w_bias_vecs = []
+            for i in range(n_output):
+                output_vecs.append(white_cumulative[:, i])
+                output_w_bias_vecs.append(white_cumulative_plus_bias[:, i])
+            output_vecs = np.array(output_vecs)
+            output_w_bias_vecs = np.array(output_w_bias_vecs)
+
+            image_chart(graph_draw_num = n_output, key = key, image_vecs = output_vecs,
+                         ordering_values = None, directory = directory, flag="output")
+            image_chart(graph_draw_num = n_output, key = key, image_vecs = output_w_bias_vecs,
+                         ordering_values = None, directory = directory, flag="output_w_bias")
+

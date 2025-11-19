@@ -1,4 +1,4 @@
-from ch05.code_5_4_1_Later import *
+from ch05.code_5_4_1_Layer import *
 
 apple = 100
 apple_num = 2

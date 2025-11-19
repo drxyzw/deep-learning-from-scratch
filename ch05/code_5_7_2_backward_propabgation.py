@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from ch05.code_5_4_1_Later import *
+from ch05.code_5_4_1_Layer import *
 
 from common.gradient import *
 import time
