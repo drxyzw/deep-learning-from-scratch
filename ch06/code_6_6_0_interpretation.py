@@ -34,7 +34,7 @@ def image_chart(graph_draw_num, key, image_vecs, ordering_values, directory, fla
     fig.set_facecolor('black')
     axes = axes.flatten()
     for i in range(graph_draw_num):
-        print(key + " " + str(i) + "No." + flag + " vectors")
+        print(key + " No." + str(i+1) + ", " + flag + " vectors")
         ordering_value_text = f"{ordering_values[i]:.2f}" if ordering_values is not None else ""
         axes[i].set_title(f"{ordering_value_text}(No.{i+1}-{flag})", color="w")
         axes[i].matshow(image_vecs[i].reshape(28, 28), cmap="gray")
@@ -45,9 +45,11 @@ def image_chart(graph_draw_num, key, image_vecs, ordering_values, directory, fla
     plt.suptitle(f"{key} {flag}", color="white")
     plt.savefig(outputfig, facecolor=fig.get_facecolor())
     # plt.show()
+    plt.close(fig)
     print("== End of plot ==")
                 
 (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
+directory = "./ch06/interpretation"
 # for accerelation
 # x_train = x_train[:500]
 # t_train = t_train[:500]
@@ -61,6 +63,13 @@ x_val = x_train[:n_val]
 t_val = t_train[:n_val]
 x_train = x_train[n_val:]
 t_train = t_train[n_val:]
+
+x_sample = x_test[:50]
+t_sample = t_test[:50]
+s_sample = np.argmax(t_sample, axis=1)
+image_chart(graph_draw_num = 50, key = "sample", image_vecs = x_sample,
+            ordering_values = s_sample, directory = directory, flag="")
+
 def __train(lr, weight_decay):
     input_size=784
     hidden_size=50 # for overfitting experiment
@@ -136,7 +145,6 @@ if __name__=="__main__":
     hyperparams.append(hyperparam)
 
     TRAIN_NETWORK = False
-    directory = "./ch06/interpretation"
 
     if TRAIN_NETWORK:
         with Pool(processes=os.cpu_count()-1) as p:
