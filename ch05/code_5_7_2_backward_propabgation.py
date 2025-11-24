@@ -199,15 +199,12 @@ class MultiLayerNet:
         self.params = {}
         self.layers = OrderedDict()
         for i in range(n_layers):
+            intermediate_inlayer_size = hidden_size
+            intermediate_outlayer_size = hidden_size
             if i == 0:
                 intermediate_inlayer_size = input_size
-                intermediate_outlayer_size = hidden_size
-            elif i == n_layers-1:
-                intermediate_inlayer_size = hidden_size
+            if i == n_layers-1:
                 intermediate_outlayer_size = output_size
-            else:
-                intermediate_inlayer_size = hidden_size
-                intermediate_outlayer_size = hidden_size
             self.params[f"W{i+1}"] = weight_init_std[f"W{i+1}"] * rand_gen.randn(intermediate_inlayer_size, intermediate_outlayer_size)
             self.params[f'b{i+1}'] = np.zeros(intermediate_outlayer_size)
 
