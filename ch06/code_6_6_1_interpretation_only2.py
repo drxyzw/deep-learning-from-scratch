@@ -16,11 +16,10 @@ VERBOSE_MESSAGE = False
 TRAIN_NETWORK = True
 PARALLEL = False
 
-def __train(lr, weight_decay, x_train, t_train, x_test, t_test):
+def __train(lr, weight_decay, x_train, t_train, x_test, t_test, n_layers):
     input_size=784
-    hidden_size=50
+    hidden_size=10
     output_size=10
-    n_layers=1# 5 # for overfitting experiment
     weight_init_std_type="He"
     if isinstance(weight_init_std_type, numbers.Number):
         weight_init_std = weight_init_std_type
@@ -40,7 +39,7 @@ def __train(lr, weight_decay, x_train, t_train, x_test, t_test):
     network = MultiLayerNet(n_layers=n_layers,
                             input_size=input_size, hidden_size=hidden_size, output_size=output_size, weight_init_std=weight_init_std,
                            use_batch_norm=use_batch_norm, activation="ReLU", weight_decay=weight_decay)
-    iters_num = 1000 # 1 mil iterations for test
+    iters_num = 10000 # 1 mil iterations for test
     train_size = x_train.shape[0]
     batch_size = 100
     train_loss_list = []
@@ -48,6 +47,8 @@ def __train(lr, weight_decay, x_train, t_train, x_test, t_test):
     test_acc_list = []
     iter_per_epoch = int(max(train_size / batch_size, 1))
     optimizer = SGD(lr = lr)
+    last_test_acc = 0.
+    second_last_acc = 0.
     for i in range(iters_num):
         batch_mask = np.random.choice(train_size, batch_size)
         x_batch = x_train[batch_mask]
@@ -62,9 +63,13 @@ def __train(lr, weight_decay, x_train, t_train, x_test, t_test):
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
             print(train_acc, test_acc)
+            if test_acc > 0.99 or (abs(last_test_acc - test_acc) < 0.0001 and abs(second_last_acc - test_acc) < 0.0001):
+                break
         # else:
         #     train_acc_list.append(np.nan)
         #     test_acc_list.append(np.nan)
+            second_last_acc = last_test_acc
+            last_test_acc = test_acc
     return train_acc_list, test_acc_list, network.params
 
 def image_chart(graph_draw_num, key, image_vecs, ordering_values, directory, flag=""):
@@ -110,8 +115,9 @@ def image_chart(graph_draw_num, key, image_vecs, ordering_values, directory, fla
 (x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
 # select only limited answers
 answers = list(range(10))
+n_layers=2 # 5 # for overfitting experiment
 
-for n_combo in range(4, 10+1):
+for n_combo in range(2, 10+1):
     select_answers = itertools.combinations(answers, n_combo)
     # select_answer = [s for s in select_answer]
     for select_answer in select_answers:
@@ -125,7 +131,7 @@ for n_combo in range(4, 10+1):
         t_train_selected = t_test[np.isin(s_test, select_answer)]
 
         dir_combo = "/combo" + str(n_combo) + "/" + "_".join(list(map(str,sorted(select_answer))))
-        directory = "./ch06/interpretation_only2/" + dir_combo
+        directory = "./ch06/interpretation_only" + str(n_layers) + "/" + dir_combo
         # for accerelation
         # x_train_selected = x_train[:500]
         # t_train_selected = t_train[:500]
@@ -166,7 +172,7 @@ for n_combo in range(4, 10+1):
             #     hyperparams.append(hyperparam)
             lr = 0.00995634412233812
             weight_decay = 4.17889769878053E-08
-            hyperparam = (lr, weight_decay, x_train_selected, t_train_selected, x_train_selected, t_train_selected)
+            hyperparam = (lr, weight_decay, x_train_selected, t_train_selected, x_train_selected, t_train_selected, n_layers)
             hyperparams.append(hyperparam)
 
             if TRAIN_NETWORK:
